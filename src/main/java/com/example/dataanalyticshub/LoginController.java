@@ -21,6 +21,7 @@ public class LoginController implements Initializable {
     @FXML
     private TextField UserText, PassText;
 
+    DataSingleton data = DataSingleton.getInstance();
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
     }
@@ -34,8 +35,9 @@ public class LoginController implements Initializable {
     public void LoginBtn(ActionEvent actionEvent) throws IOException {
         if (accountsHashMap.containsKey(UserText.getText())) {
             if (PassText.getText().equals(accountsHashMap.get(UserText.getText()).getPassword())) {
-                Parent root = FXMLLoader.load(getClass().getResource("CreateAccount.fxml"));
-
+                data.setUserName(UserText.getText());
+                Parent root = FXMLLoader.load(getClass().getResource("Dashboard.fxml"));
+                Main.Primary.setScene(new Scene(root));
             }
 
         }

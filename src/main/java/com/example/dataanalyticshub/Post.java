@@ -6,10 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
 public class Post{
-    private String content;
-    private String author;
-    private int likes;
-    private int shares;
+    private int ID,likes,shares;
+    private String content,author;
     private LocalDateTime date;
 
 
@@ -20,10 +18,30 @@ public class Post{
         this.shares = shares;
         this.date = date;
       }
+    public Post (int ID, String content, String author, int likes, int shares, LocalDateTime date) {
+        this.ID = ID;
+        this.content = content;
+        this.author = author;
+        this.likes = likes;
+        this.shares = shares;
+        this.date = date;
+    }
 
-    
 
+    public int getID() {
+        return ID;
+    }
 
+    public String getContent() {
+        return content;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+    public String getDate() {
+        return String.valueOf(date);
+    }
 
     public int getLikes() {
         return likes;
