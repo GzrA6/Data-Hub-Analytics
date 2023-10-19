@@ -12,6 +12,8 @@ import java.util.HashMap;
 public class Main extends Application {
     public static Stage Primary;
     static HashMap<String, Accounts> accountsHashMap = new HashMap<String, Accounts>();
+    static HashMap<Integer, Post> posts = new HashMap<Integer, Post>();
+
 
     public static void main(String[] args) {
         launch(args);

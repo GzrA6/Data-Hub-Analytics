@@ -6,7 +6,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,17 +13,21 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+import static com.example.dataanalyticshub.Main.accountsHashMap;
+
 
 public class DashboardController implements Initializable {
-    public Label WelcomeLabel, ErrorLabel;
+    public Label WelcomeLabel, ErrorLabel, EditLabel, ErrorPostLabel;
     public TableView<Post> DisplayList = new TableView<>();
     public TableColumn<Post, String> IDCol, ContentCol, AuthorCol, LikesCol, SharesCol, DateCol = new TableColumn<>();
-    public TextField PostIDText, PostNumText, AuthText;
-    public RadioButton AllRadio, AuRadio;
+    public TextField PostIDText, PostNumText, AuthText, EditUser, EditPass, EditFirst, EditLast, IDAddTxt, AuthAddTxt, LikesAddTxt, SharesAddTxt, DateAddTxt;
+    public TextArea ContentAddTxt;
     ObservableList<Post> oList = FXCollections.observableArrayList(csvRead());
     DataSingleton data = DataSingleton.getInstance();
 
@@ -50,6 +53,7 @@ public class DashboardController implements Initializable {
     }
 
     public void ExportBtn(ActionEvent actionEvent) {
+        DisplayList.getItems();
     }
 
     public void RetreiveBtn(ActionEvent actionEvent) {
@@ -58,13 +62,19 @@ public class DashboardController implements Initializable {
             TopN(oList);
         } else {
             if (!AuthText.getText().isEmpty()) {
-                setTable(FXCollections.observableArrayList(searchPosts(null, AuthText.getText())));
-                TopN(FXCollections.observableArrayList(searchPosts(null, AuthText.getText())));
-                if (!PostIDText.getText().isEmpty()) {
-                    POKL(searchPosts(null, AuthText.getText()));
+                List<Post> Auth = searchPosts(null, AuthText.getText());
+                if (!Auth.isEmpty()) {
+                    setTable(FXCollections.observableArrayList());
+                    TopN(FXCollections.observableArrayList(searchPosts(null, AuthText.getText())));
+                    if (!PostIDText.getText().isEmpty()) {
+                        IDDisplay(searchPosts(parseAndValidateInteger(PostIDText.getText()), AuthText.getText()));
+                    }
+                } else {
+                    ErrorLabel.setText("Author Does Not Exist");
+                    ErrorLabel.setVisible(true);
                 }
-            }else if (!PostIDText.getText().isEmpty()) {
-                POKL(searchPosts(parseAndValidateInteger(PostIDText.getText()), null));
+            } else if (!PostIDText.getText().isEmpty()) {
+                IDDisplay(searchPosts(parseAndValidateInteger(PostIDText.getText()), null));
             }
         }
 
@@ -111,43 +121,26 @@ public class DashboardController implements Initializable {
     }
 
     public List<Post> searchPosts(Integer ID, String Author) {
-        List<Post> searchList = new ArrayList<>();
-
-        for (Post item : oList) {
-            if ((ID != null) && item.getID() == ID) {
-                searchList.add(item);
-            }
-            if (item.getAuthor().equals(Author)) {
-                searchList.add(item);
-            }
-        }
-        return searchList;
+        return oList.stream().filter(item -> (ID == null || item.getID() == ID) && (Author == null || item.getAuthor().equals(Author))).collect(Collectors.toList());
     }
 
-
-    public int parseAndValidateInteger(String input) {
+    public Integer parseAndValidateInteger(String input) {
         try {
             return Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            return 0;
+            return null;
         }
     }
 
-    public void TopN(List<Post> IK) {
+    public void TopN(List<Post> posts) {
         if (!PostNumText.getText().isEmpty()) {
-            FXCollections.sort(oList, Comparator.comparingInt(Post::getLikes).reversed());
-            ArrayList<Post> top3List = new ArrayList<>();
-            for (int i = 0; i < Math.min(IK.size(), parseAndValidateInteger(PostNumText.getText())); i++) {
-                top3List.add(IK.get(i));
-            }
-            ObservableList<Post> items = FXCollections.observableArrayList(top3List);
-            setTable(items);
+            List<Post> topPosts = posts.stream().sorted(Comparator.comparingInt(Post::getLikes).reversed()).limit(parseAndValidateInteger(PostNumText.getText())).collect(Collectors.toList());
+            setTable(FXCollections.observableArrayList(topPosts));
         }
     }
 
-    public void POKL(List<Post> IK) {
+    public void IDDisplay(List<Post> IK) {
         if (!IK.isEmpty()) {
-            System.out.println(IK);
             setTable(FXCollections.observableArrayList(IK));
         } else {
             // Handle the case when the item is not found
@@ -157,4 +150,54 @@ public class DashboardController implements Initializable {
 
     }
 
+
+    public void UpdateProfileBtn(ActionEvent actionEvent) {
+        Accounts PK = accountsHashMap.get(data.getUserName());
+        if (!EditUser.getText().isEmpty() && !data.getUserName().equals(EditUser.getText())) {
+            accountsHashMap.remove(data.getUserName());
+            accountsHashMap.put(EditUser.getText(), PK);
+            data.setUserName(EditUser.getText());
+        }
+        if (!EditPass.getText().isEmpty()) {
+            PK.setPassword(EditPass.getText());
+        }
+        if (!EditFirst.getText().isEmpty()) {
+            PK.setfName(EditFirst.getText());
+        }
+        if (!EditLast.getText().isEmpty()) {
+            PK.setlName(EditLast.getText());
+        }
+        EditLabel.setText("Profile Updated");
+    }
+
+    public void AddPostBtn(ActionEvent actionEvent) {
+        if (IDAddTxt.getText().isEmpty() || AuthAddTxt.getText().isEmpty() || ContentAddTxt.getText().isEmpty() || LikesAddTxt.getText().isEmpty() || SharesAddTxt.getText().isEmpty() || DateAddTxt.getText().isEmpty()) {
+            ErrorPostLabel.setText("Please Fill All Sections");
+        }
+        Integer ID, Likes, Shares, Check = 0;
+        ID = parseAndValidateInteger(IDAddTxt.getText());
+        Likes = parseAndValidateInteger(LikesAddTxt.getText());
+        Shares = parseAndValidateInteger(SharesAddTxt.getText());
+        String Auth, Content;
+        Auth = AuthAddTxt.getText();
+        Content = ContentAddTxt.getText();
+        LocalDateTime DateTime;
+        DateTime = ParseDateTime(DateAddTxt.getText());
+        if (Likes == null || ID == null || Shares == null || DateTime == null) {
+            ErrorPostLabel.setText("Please Check Your Inputs");
+        } else {
+            oList.add(new Post(ID, Content, Auth, Likes, Shares, DateTime));
+        }
+
+    }
+
+    public LocalDateTime ParseDateTime(String DateStr) {
+        try {
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
+            LocalDateTime localDateTime = LocalDateTime.parse(DateStr, inputFormatter);
+            return localDateTime;
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
 }

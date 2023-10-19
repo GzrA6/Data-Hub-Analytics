@@ -40,7 +40,8 @@ public class Post{
         return author;
     }
     public String getDate() {
-        return String.valueOf(date);
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
+        return date.format(inputFormatter);
     }
 
     public int getLikes() {
