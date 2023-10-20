@@ -2,27 +2,27 @@ package com.example.dataanalyticshub;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
-
-import static com.example.dataanalyticshub.Main.accountsHashMap;
-
 
 public class Database {
-    public static void main() throws SQLException {
+    private static final String URL = "jdbc:sqlite:src/main/java/com/example/dataanalyticshub/Database.db";
 
-        String url = "jdbc:sqlite:src/main/java/com/example/dataanalyticshub/Database.db";
-        // Create a connection to the database
-        Connection connection = DriverManager.getConnection(url);
-        accountsHashMap = loadAccounts(connection);
-        Post.getPostList().addAll(loadPosts(connection));
-
+    public static void StartUp() throws SQLException {
+        // Load account data and posts into the application
+        Accounts.setAccountsHashMap(loadAccounts(getConnection()));
+        Post.getPostList().addAll(loadPosts(getConnection()));
     }
+
+    public static Connection getConnection() throws SQLException {
+        // Create a connection to the SQLite database
+        return DriverManager.getConnection(URL);
+    }
+
     public static HashMap<String, Accounts> loadAccounts(Connection connection) {
+        // Load account data from the database into a HashMap
         HashMap<String, Accounts> accountMap = new HashMap<>();
         try {
             String query = "SELECT Username, Password, FirstName, LastName, VIP FROM Accounts";
@@ -36,22 +36,20 @@ public class Database {
                 String Last = resultSet.getString("LastName");
                 Integer VIP = resultSet.getInt("VIP");
 
-                // Additional account data retrieval if needed
-
                 // Create an Account object and put it into the HashMap
-                Accounts account = new Accounts(password,First,Last,VIP);
+                Accounts account = new Accounts(password, First, Last, VIP);
                 accountMap.put(username, account);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-
         }
 
         return accountMap;
     }
 
     public static ObservableList<Post> loadPosts(Connection connection) {
-        ObservableList<Post> PostList = FXCollections.observableArrayList();;
+        // Load post data from the database into an ObservableList
+        ObservableList<Post> PostList = FXCollections.observableArrayList();
         try {
             String query = "SELECT ID, Content, Author, Likes, Shares, Date, Username FROM Posts";
             PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -66,12 +64,9 @@ public class Database {
                 String dateStr = resultSet.getString("Date");
                 String Username = resultSet.getString("Username");
 
-
-                DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
-                LocalDateTime date = LocalDateTime.parse(dateStr, inputFormatter);
+                LocalDateTime date = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm"));
                 Post post = new Post(ID, Content, Author, Likes, Shares, date, Username);
                 PostList.add(post);
-
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -88,5 +83,48 @@ public class Database {
         return PostList;
     }
 
+    public static void SaveToDB(Connection connection, ObservableList<Post> postsList, HashMap<String, Accounts> accountsMap) {
+        // Insert post and account data into the database
+        String queryPosts = "INSERT INTO Posts (ID, Content, Author, Likes, Shares, Date, Username) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String queryAccounts = "INSERT INTO Accounts (Username, Password, FirstName, LastName, VIP) VALUES (?, ?, ?, ?, ?)";
 
+        try {
+            clearTable(getConnection(), "Accounts");
+            clearTable(getConnection(), "Posts");
+            PreparedStatement postStatement = connection.prepareStatement(queryPosts);
+            for (Post post : Post.getPostList()) {
+                postStatement.setInt(1, post.getID());
+                postStatement.setString(2, post.getContent());
+                postStatement.setString(3, post.getAuthor());
+                postStatement.setInt(4, post.getLikes());
+                postStatement.setInt(5, post.getShares());
+                postStatement.setString(6, post.getDate());
+                postStatement.setString(7, post.getUsername());
+                postStatement.executeUpdate();
+            }
+            PreparedStatement accountsStatement = connection.prepareStatement(queryAccounts);
+            for (String accounts : Accounts.getAccountsHashMap().keySet()) {
+                accountsStatement.setString(1, accounts);
+                Accounts account = accountsMap.get(accounts);
+                accountsStatement.setString(2, account.getPassword());
+                accountsStatement.setString(3, account.getfName());
+                accountsStatement.setString(4, account.getlName());
+                accountsStatement.setInt(5, account.getVIP());
+                accountsStatement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void clearTable(Connection connection, String tableName) {
+        // Clear data from the specified table
+        try {
+            Statement statement = connection.createStatement();
+            String clearQuery = "DELETE FROM " + tableName;
+            statement.execute(clearQuery);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

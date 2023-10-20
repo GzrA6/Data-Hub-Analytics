@@ -34,22 +34,23 @@
                         <TextField fx:id="AuthText" alignment="CENTER" layoutX="437.0" layoutY="64.0" promptText="Post Author" />
                         <TableView fx:id="DisplayList" layoutX="14.0" layoutY="55.0" prefHeight="308.0" prefWidth="413.0">
                             <columns>
-                                <TableColumn fx:id="IDCol" prefWidth="75.0" text="ID" />
-                                <TableColumn fx:id="ContentCol" prefWidth="98.0" text="Content" />
-                                <TableColumn fx:id="AuthorCol" prefWidth="70.0" text="Author" />
-                                <TableColumn fx:id="LikesCol" prefWidth="50.0" text="Likes" />
-                                <TableColumn fx:id="SharesCol" prefWidth="56.0" text="Shares" />
-                                <TableColumn fx:id="DateCol" prefWidth="62.0" text="Date" />
+                                <TableColumn fx:id="TableID" prefWidth="75.0" text="ID" />
+                                <TableColumn fx:id="TableContent" prefWidth="98.0" text="Content" />
+                                <TableColumn fx:id="TableAuthor" prefWidth="70.0" text="Author" />
+                                <TableColumn fx:id="TableLikes" prefWidth="50.0" text="Likes" />
+                                <TableColumn fx:id="TableShares" prefWidth="56.0" text="Shares" />
+                                <TableColumn fx:id="TableDate" prefWidth="62.0" text="Date" />
                             </columns>
                         </TableView>
-                        <Label fx:id="ErrorLabel" layoutX="436.0" layoutY="320.0" prefHeight="27.0" prefWidth="152.0" textFill="RED" />
-                  <RadioButton fx:id="AllRadio" layoutX="438.0" layoutY="215.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="46.0" text="All">
+                        <Label fx:id="HomeLabel" layoutX="438.0" layoutY="273.0" prefHeight="36.0" prefWidth="152.0" textFill="RED" />
+                  <RadioButton fx:id="AllRadio" layoutX="438.0" layoutY="215.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="46.0" selected="true" text="All">
                      <toggleGroup>
                         <ToggleGroup fx:id="Collection" />
                      </toggleGroup>
                   </RadioButton>
                   <RadioButton fx:id="UserRadio" layoutX="438.0" layoutY="242.0" mnemonicParsing="false" text="User Only Collection" toggleGroup="$Collection" />
-                  <Button layoutX="435.0" layoutY="321.0" mnemonicParsing="false" onAction="#LogOutBtn" text="Log Out" />
+                  <Button layoutX="432.0" layoutY="321.0" mnemonicParsing="false" onAction="#LogOutBtn" text="Log Out" />
+                  <Button layoutX="495.0" layoutY="321.0" mnemonicParsing="false" onAction="#UpgradeBtn" prefHeight="25.0" prefWidth="99.0" text="Upgrade to VIP" />
                     </children>
                 </AnchorPane>
             </content>
@@ -78,30 +79,32 @@
                                 <Font name="Arial Bold" size="16.0" />
                             </font>
                         </Label>
-                        <Label fx:id="EditLabel" layoutX="50.0" layoutY="43.0" prefHeight="17.0" prefWidth="111.0" textFill="#ff1818" />
+                        <Label fx:id="EditProfileLabel" layoutX="50.0" layoutY="43.0" prefHeight="17.0" prefWidth="111.0" textFill="#ff1818" />
                         <Label layoutX="251.0" layoutY="61.0" text="ID:" />
-                        <TextField fx:id="IDAddTxt" layoutX="273.0" layoutY="57.0" prefHeight="25.0" prefWidth="79.0" />
+                        <TextField fx:id="AddIDTxt" layoutX="273.0" layoutY="57.0" prefHeight="25.0" prefWidth="79.0" />
                         <Label layoutX="385.0" layoutY="61.0" text="Author:" />
-                        <TextField fx:id="AuthAddTxt" layoutX="431.0" layoutY="57.0" prefHeight="25.0" prefWidth="122.0" />
+                        <TextField fx:id="AddAuthorTxt" layoutX="431.0" layoutY="57.0" prefHeight="25.0" prefWidth="122.0" />
                         <Label layoutX="215.0" layoutY="186.0" text="Contents:" />
-                        <TextArea fx:id="ContentAddTxt" layoutX="273.0" layoutY="103.0" prefHeight="174.0" prefWidth="279.0" />
-                        <TextField fx:id="LikesAddTxt" layoutX="273.0" layoutY="287.0" prefHeight="25.0" prefWidth="40.0" />
-                        <TextField fx:id="SharesAddTxt" layoutX="363.0" layoutY="287.0" prefHeight="25.0" prefWidth="44.0" />
+                        <TextArea fx:id="AddContentTxt" layoutX="273.0" layoutY="103.0" prefHeight="174.0" prefWidth="279.0" />
+                        <TextField fx:id="AddLikesTxt" layoutX="273.0" layoutY="287.0" prefHeight="25.0" prefWidth="40.0" />
+                        <TextField fx:id="AddSharesTxt" layoutX="363.0" layoutY="287.0" prefHeight="25.0" prefWidth="44.0" />
                         <Label layoutX="237.0" layoutY="291.0" text="Likes:" />
                         <Label layoutX="322.0" layoutY="291.0" text="Shares:" />
                         <Button layoutX="472.0" layoutY="333.0" mnemonicParsing="false" onAction="#AddPostBtn" prefHeight="25.0" prefWidth="81.0" text="Add Post" />
-                        <Label fx:id="ErrorPostLabel" layoutX="273.0" layoutY="337.0" prefHeight="17.0" prefWidth="198.0" textFill="RED" />
+                        <Label fx:id="AddPostLabel" layoutX="273.0" layoutY="337.0" prefHeight="17.0" prefWidth="198.0" textFill="RED" />
                         <Label layoutX="417.0" layoutY="291.0" text="Date:" />
-                  <TextField fx:id="DateAddTxt" layoutX="451.0" layoutY="287.0" prefHeight="25.0" prefWidth="102.0" />
+                  <TextField fx:id="AddDateTxt" layoutX="451.0" layoutY="287.0" prefHeight="25.0" prefWidth="102.0" />
                     </children>
                 </AnchorPane>
             </content>
         </Tab>
-        <Tab disable="true" text="V.I.P.">
+        <Tab fx:id="VipTab" disable="true" text="V.I.P.">
             <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                <children>
-                  <PieChart fx:id="PieChart" layoutX="120.0" layoutY="20.0" prefHeight="269.0" prefWidth="320.0" />
+                  <PieChart fx:id="PieChart" layoutX="14.0" layoutY="14.0" prefHeight="342.0" prefWidth="376.0" />
+                  <Button layoutX="458.0" layoutY="43.0" mnemonicParsing="false" onAction="#ImportBtn" text="Import CSV" />
+                  <Label fx:id="VipLabel" layoutX="417.0" layoutY="88.0" prefHeight="62.0" prefWidth="160.0" textFill="#ff0101" />
                </children></AnchorPane>
             </content>
         </Tab>

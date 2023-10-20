@@ -1,7 +1,5 @@
 package com.example.dataanalyticshub;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 
 public class DataSingleton {
@@ -11,9 +9,11 @@ public class DataSingleton {
     private Stage Primary;
 
     private DataSingleton() {
+        // Private constructor to prevent external instantiation
     }
 
     public static DataSingleton getInstance() {
+        // Get the instance of the singleton class
         return instance;
     }
 
@@ -22,13 +22,16 @@ public class DataSingleton {
     }
 
     public void setUserName(String userName) {
+        // Set the current user's name
         this.userName = userName;
     }
 
-    public Stage getStage(){
+    public Stage getStage() {
         return Primary;
     }
+
     public void setStage(Stage Primary) {
+        // Set the primary stage of the JavaFX application
         this.Primary = Primary;
     }
 }

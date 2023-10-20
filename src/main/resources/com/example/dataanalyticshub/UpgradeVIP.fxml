@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane prefHeight="285.0" prefWidth="253.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.dataanalyticshub.UpgradeVIP">
+   <children>
+      <Label layoutX="54.0" layoutY="14.0" text="Upgrade to V.I.P.">
+         <font>
+            <Font name="System Bold" size="18.0" />
+         </font>
+      </Label>
+      <Label fx:id="UpgradeLabel" layoutX="40.0" layoutY="71.0" prefHeight="117.0" prefWidth="169.0" text="Would you like to subscribe to the application for a monthly fee of $0?" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
+      <Button fx:id="YesBtn" layoutX="84.0" layoutY="208.0" mnemonicParsing="false" onAction="#YesBtn" text="Yes" />
+      <Button fx:id="NoBtn" layoutX="144.0" layoutY="208.0" mnemonicParsing="false" onAction="#NoBtn" text="Back" />
+   </children>
+</AnchorPane>

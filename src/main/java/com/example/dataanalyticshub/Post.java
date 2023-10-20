@@ -1,33 +1,58 @@
 package com.example.dataanalyticshub;
 
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
 
-public class Post{
-    private int ID,likes,shares;
-    private String content,author, Username;
-    private LocalDateTime date;
+public class Post {
     private static ObservableList<Post> PostList = FXCollections.observableArrayList();
+    private final int ID;
+    private final int likes;
+    private final int shares;
+    private final String content,author, username;
+    private final LocalDateTime date;
 
 
-    public Post (int ID, String content, String author, int likes, int shares, LocalDateTime date, String Username) {
+    public Post(int ID, String content, String author, int likes, int shares, LocalDateTime date, String Username) {
         this.ID = ID;
         this.content = content;
         this.author = author;
         this.likes = likes;
         this.shares = shares;
         this.date = date;
-        this.Username = Username;
+        this.username = Username;
+    }
+
+    // HashMap methods
+    public static ObservableList<Post> getPostList() {
+        return PostList;
+    }
+
+    public static boolean postExists(int postID) {
+        for (Post post : PostList) {
+            if (post.getID() == postID) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void addPostList(List<Post> post) {
+        PostList.addAll(post);
+    }
+
+    public static void addPost(Post post) {
+        PostList.add(post);
+    }
+
+    public static void removePost(Post post) {
+        PostList.remove(post);
     }
 
 
+    // Getters and setters
     public int getID() {
         return ID;
     }
@@ -39,6 +64,7 @@ public class Post{
     public String getAuthor() {
         return author;
     }
+
     public String getDate() {
         DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
         return date.format(inputFormatter);
@@ -52,45 +78,16 @@ public class Post{
         return shares;
     }
 
-    static ObservableList<Post> getPostList() {
-        return PostList;
-    }
-
     public String getUsername() {
-        return Username;
+        return username;
     }
 
-    public void setUsername(String username) {
-        Username = username;
-    }
-
-    static class likesComparator implements Comparator<Post> {
-        public int compare(Post s1, Post s2)
-        {
-            return Integer.compare(s2.getLikes(), s1.getLikes());
-        }
-    }
-    static class sharesComparator implements Comparator<Post> {
-        public int compare(Post s1, Post s2)
-        {
-            return Integer.compare(s2.getShares(), s1.getShares());
-        }
-    }
-
-    public String csvFormat () {
+    public String csvFormat() {
         DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
         String formattedDateTime = date.format(inputFormatter);
-
-
-        return  ID + ", " + content + ", " + author + ", " + likes + ", " + shares + ", " + formattedDateTime;
+        return ID + ", " + content + ", " + author + ", " + likes + ", " + shares + ", " + formattedDateTime;
     }
-  
-    public String toString () {
-        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
-        String formattedDateTime = date.format(inputFormatter);
-        return ", Content: " + content + ", Author: " + author + ", Likes:  " + likes + ", Shares: " + shares + ", Date: " + formattedDateTime;
-      }
-      
+
 
 }
 

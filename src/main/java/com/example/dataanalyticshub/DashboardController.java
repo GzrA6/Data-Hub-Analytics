@@ -10,12 +10,12 @@ import javafx.scene.Scene;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -25,62 +25,96 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-import static com.example.dataanalyticshub.Main.accountsHashMap;
-
 
 public class DashboardController implements Initializable {
-    public Label WelcomeLabel, ErrorLabel, EditLabel, ErrorPostLabel;
+    public Label WelcomeLabel, HomeLabel, EditProfileLabel, AddPostLabel, VipLabel;
     public TableView<Post> DisplayList = new TableView<>();
-    public TableColumn<Post, String> IDCol, ContentCol, AuthorCol, LikesCol, SharesCol, DateCol = new TableColumn<>();
-    public TextField PostIDText, PostNumText, AuthText, EditUser, EditPass, EditFirst, EditLast, IDAddTxt, AuthAddTxt, LikesAddTxt, SharesAddTxt, DateAddTxt;
-    public TextArea ContentAddTxt;
+    public TableColumn<Post, String> TableID, TableContent, TableAuthor, TableLikes, TableShares, TableDate = new TableColumn<>();
+    public TextField PostIDText, PostNumText, AuthText, EditUser, EditPass, EditFirst, EditLast, AddIDTxt, AddAuthorTxt, AddLikesTxt, AddSharesTxt, AddDateTxt;
+    public TextArea AddContentTxt;
     public javafx.scene.chart.PieChart PieChart;
-    public RadioButton AllRadio,UserRadio;
-    DataSingleton data = DataSingleton.getInstance();
+    public RadioButton AllRadio, UserRadio;
+    public Tab VipTab;
+    DataSingleton instance = DataSingleton.getInstance();
 
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        WelcomeLabel.setText("Welcome, " + data.getUserName());
+        WelcomeLabel.setText("Welcome, " + instance.getUserName());
         setTable(Post.getPostList());
+        if (Accounts.getAccount(instance.getUserName()).getVIP() == 1) {
+            VipTab.setDisable(false);
+            setPieChart();
+        }
 
 
     }
 
+    // Buttons Actions
     public void RemoveBtn(ActionEvent actionEvent) {
-        List<Post> Package = searchPosts(parseAndValidateInteger(PostIDText.getText()), null,null);
-        if (!Package.isEmpty()) {
-            for (Post packageToRemove : Package) {
-                Post.getPostList().remove(packageToRemove);
+        // Remove Post Handler
+        List<Post> postList = searchPosts(parseAndValidateInteger(PostIDText.getText()), null, null);
+        if (!postList.isEmpty()) {
+            for (Post post : postList) {
+                // Remove each matching post from the PostList.
+                Post.removePost(post);
             }
-            // All matching items found and removed
         } else {
-            // No matching items found, display a message or take appropriate action
-            ErrorLabel.setText("No matching posts found");
+            // If no matching posts are found:
+            HomeLabel.setText("No matching posts found");
         }
     }
 
     public void ExportBtn(ActionEvent actionEvent) {
+        // Export Post Handler
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        File file = fileChooser.showSaveDialog(new Stage());
 
+        if (file != null) {
+            // Get the ID to export from the PostIDText field and validate it.
+            int ID = parseAndValidateInteger(PostIDText.getText());
+
+            // Find the post with the specified ID in the PostList.
+            Post postExport = Post.getPostList()
+                    .stream()
+                    .filter(post -> post.getID() == ID)
+                    .findFirst()
+                    .orElse(null);
+
+            if (postExport != null) {
+                // If the post exists, create a FileWriter to save the data to the selected file.
+                try (FileWriter writer = new FileWriter(file)) {
+                    // Write the header and the post information to the CSV file.
+                    writer.append("ID, Content, Author, Likes, Shares, Date\n");
+                    writer.append(postExport.csvFormat());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                // Display a message if no matching post is found for the given ID.
+                HomeLabel.setText("No matching post found for the given ID.");
+            }
+        }
     }
 
     public void RetrieveBtn(ActionEvent actionEvent) {
-       if (AllRadio.isSelected()){
-           System.out.println("asd");
-           RetrieveMethod(Post.getPostList(),null);
-        }else if (UserRadio.isSelected()){
-           System.out.println(data.getUserName());
-           RetrieveMethod(Post.getPostList(),data.getUserName());
-       }
+        // Retrieve Post Handler
+        if (AllRadio.isSelected()) {
+            RetrieveMethod(null);
+        } else if (UserRadio.isSelected()) {
+            RetrieveMethod(instance.getUserName());
+        }
 
     }
 
     public void UpdateProfileBtn(ActionEvent actionEvent) {
-        Accounts PK = accountsHashMap.get(data.getUserName());
-        if (!EditUser.getText().isEmpty() && !data.getUserName().equals(EditUser.getText())) {
-            accountsHashMap.remove(data.getUserName());
-            accountsHashMap.put(EditUser.getText(), PK);
-            data.setUserName(EditUser.getText());
+        // Update Account Handler
+        Accounts PK = Accounts.getAccount(instance.getUserName());
+        if (!EditUser.getText().isEmpty() && !instance.getUserName().equals(EditUser.getText())) {
+            Accounts.removeAccount(instance.getUserName());
+            Accounts.addAccount(EditUser.getText(), PK);
+            instance.setUserName(EditUser.getText());
         }
         if (!EditPass.getText().isEmpty()) {
             PK.setPassword(EditPass.getText());
@@ -91,67 +125,67 @@ public class DashboardController implements Initializable {
         if (!EditLast.getText().isEmpty()) {
             PK.setlName(EditLast.getText());
         }
-        EditLabel.setText("Profile Updated");
+        EditProfileLabel.setText("Profile Updated");
     }
 
     public void AddPostBtn(ActionEvent actionEvent) {
-        if (IDAddTxt.getText().isEmpty() || AuthAddTxt.getText().isEmpty() || ContentAddTxt.getText().isEmpty() || LikesAddTxt.getText().isEmpty() || SharesAddTxt.getText().isEmpty() || DateAddTxt.getText().isEmpty()) {
-            ErrorPostLabel.setText("Please Fill All Sections");
+        // Add Post Handler
+
+        if (AddIDTxt.getText().isEmpty() || AddAuthorTxt.getText().isEmpty() || AddContentTxt.getText().isEmpty() || AddLikesTxt.getText().isEmpty() || AddSharesTxt.getText().isEmpty() || AddDateTxt.getText().isEmpty()) {
+            AddPostLabel.setText("Please Fill All Sections");
         }
         Integer ID, Likes, Shares, Check = 0;
-        ID = parseAndValidateInteger(IDAddTxt.getText());
-        Likes = parseAndValidateInteger(LikesAddTxt.getText());
-        Shares = parseAndValidateInteger(SharesAddTxt.getText());
+        ID = parseAndValidateInteger(AddIDTxt.getText());
+        Likes = parseAndValidateInteger(AddLikesTxt.getText());
+        Shares = parseAndValidateInteger(AddSharesTxt.getText());
         String Auth, Content;
-        Auth = AuthAddTxt.getText();
-        Content = ContentAddTxt.getText();
+        Auth = AddAuthorTxt.getText();
+        Content = AddContentTxt.getText();
         LocalDateTime DateTime;
-        DateTime = ParseDateTime(DateAddTxt.getText());
+        try {
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
+            DateTime = LocalDateTime.parse(AddDateTxt.getText(), inputFormatter);
+        } catch (DateTimeParseException e) {
+            DateTime = null;
+        }
         if (Likes == null || ID == null || Shares == null || DateTime == null) {
-            ErrorPostLabel.setText("Please Check Your Inputs");
+            AddPostLabel.setText("Please Check Your Inputs");
         } else {
-            Post.getPostList().add(new Post(ID, Content, Auth, Likes, Shares, DateTime, data.getUserName()));
+            AddPostLabel.setText("Post Added");
+            Post.addPost(new Post(ID, Content, Auth, Likes, Shares, DateTime, instance.getUserName()));
         }
 
     }
 
-
-    public ObservableList<Post> csvRead() {
-        String csvFilePath = Paths.get("src/main/java/com/example/dataanalyticshub", "posts.csv").toString();
-        List<Post> postList = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFilePath))) {
-            br.readLine();
-
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
-
-                int ID = Integer.parseInt(values[0].trim());
-                String content = values[1].trim();
-                String author = values[2].trim();
-                int likes = Integer.parseInt(values[3].trim());
-                int shares = Integer.parseInt(values[4].trim());
-                String dateStr = values[5].trim();
-                DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
-                LocalDateTime date = LocalDateTime.parse(dateStr, inputFormatter);
-                Post post = new Post(ID, content, author, likes, shares, date, null);
-                postList.add(post);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Error in reading file");
-        }
-        return FXCollections.observableArrayList(postList);
+    public void LogOutBtn(ActionEvent actionEvent) throws IOException, SQLException {
+        // Log Out Post Handler
+        Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"));
+        instance.getStage().setScene(new Scene(root));
+        Database.SaveToDB(Database.getConnection(), Post.getPostList(), Accounts.getAccountsHashMap());
     }
 
+    public void UpgradeBtn(ActionEvent actionEvent) throws IOException {
+        // Upgrade Account VIP Handler
+        Parent root = FXMLLoader.load(getClass().getResource("UpgradeVIP.fxml"));
+        instance.getStage().setScene(new Scene(root));
+    }
+
+    public void ImportBtn(ActionEvent actionEvent) {
+        // Import CSV Posts Handler
+
+        Post.addPostList(csvRead());
+
+    }
+
+
+    //Methods & Validators
     private void setTable(ObservableList<Post> List) {
-        IDCol.setCellValueFactory(new PropertyValueFactory<Post, String>("ID"));
-        ContentCol.setCellValueFactory(new PropertyValueFactory<Post, String>("Content"));
-        AuthorCol.setCellValueFactory(new PropertyValueFactory<Post, String>("Author"));
-        LikesCol.setCellValueFactory(new PropertyValueFactory<Post, String>("Likes"));
-        SharesCol.setCellValueFactory(new PropertyValueFactory<Post, String>("Shares"));
-        DateCol.setCellValueFactory(new PropertyValueFactory<Post, String>("Date"));
+        TableID.setCellValueFactory(new PropertyValueFactory<Post, String>("ID"));
+        TableContent.setCellValueFactory(new PropertyValueFactory<Post, String>("Content"));
+        TableAuthor.setCellValueFactory(new PropertyValueFactory<Post, String>("Author"));
+        TableLikes.setCellValueFactory(new PropertyValueFactory<Post, String>("Likes"));
+        TableShares.setCellValueFactory(new PropertyValueFactory<Post, String>("Shares"));
+        TableDate.setCellValueFactory(new PropertyValueFactory<Post, String>("Date"));
         DisplayList.setItems(List);
 
     }
@@ -160,10 +194,12 @@ public class DashboardController implements Initializable {
         return Post.getPostList()
                 .stream()
                 .filter(item -> (ID == null || item.getID() == ID) &&
-                        (Author == null || item.getAuthor().equals(Author)) &&
-                        (User == null || item.getUsername().equals(data.getUserName()))) // Filter by User if User is not null
-                .collect(Collectors.toList());
+                        (Author == null || (item.getAuthor() != null && item.getAuthor().equals(Author))) &&
+                        (User == null || (item.getUsername() != null && item.getUsername().equals(instance.getUserName()))))
+                                // Filter by User if User is not null
+                                .collect(Collectors.toList());
     }
+
 
     public Integer parseAndValidateInteger(String input) {
         try {
@@ -173,10 +209,14 @@ public class DashboardController implements Initializable {
         }
     }
 
-    public void TopN(List<Post> posts) {
-        if (!PostNumText.getText().isEmpty()) {
+    public void TopNPosts(List<Post> posts) {
+        if (!PostNumText.getText().isEmpty() && parseAndValidateInteger(PostNumText.getText()) > 0) {
             List<Post> topPosts = posts.stream().sorted(Comparator.comparingInt(Post::getLikes).reversed()).limit(parseAndValidateInteger(PostNumText.getText())).collect(Collectors.toList());
             setTable(FXCollections.observableArrayList(topPosts));
+        }else {
+            List<Post> topPosts = posts.stream().sorted(Comparator.comparingInt(Post::getLikes).reversed()).toList();
+            setTable(FXCollections.observableArrayList(topPosts));
+
         }
     }
 
@@ -184,22 +224,12 @@ public class DashboardController implements Initializable {
         if (!IK.isEmpty()) {
             setTable(FXCollections.observableArrayList(IK));
         } else {
-            // Handle the case when the item is not found
-            ErrorLabel.setText("Post ID doesn't exist");
-            ErrorLabel.setVisible(true);
+            HomeLabel.setText("Post ID doesn't exist");
+            HomeLabel.setVisible(true);
         }
 
     }
 
-    public LocalDateTime ParseDateTime(String DateStr) {
-        try {
-            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
-            LocalDateTime localDateTime = LocalDateTime.parse(DateStr, inputFormatter);
-            return localDateTime;
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-    }
 
     private void setPieChart() {
         int share0To99Count = 0;
@@ -227,32 +257,69 @@ public class DashboardController implements Initializable {
     }
 
 
-    public void LogOutBtn(ActionEvent actionEvent) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"));
-        data.getStage().setScene(new Scene(root));
-    }
-
-    public void RetrieveMethod(ObservableList<Post> PL, String User) {
+    public void RetrieveMethod(String User) {
         if (PostNumText.getText().isEmpty() && PostIDText.getText().isEmpty() && AuthText.getText().isEmpty()) {
-
-            setTable(FXCollections.observableArrayList(searchPosts(null,null,User)));
-            TopN(FXCollections.observableArrayList(searchPosts(null,null,User)));
+            TopNPosts(FXCollections.observableArrayList(searchPosts(null, null, User)));
         } else {
             if (!AuthText.getText().isEmpty()) {
-                List<Post> Auth = searchPosts(null, AuthText.getText(),User);
+                List<Post> Auth = searchPosts(null, AuthText.getText(), User);
                 if (!Auth.isEmpty()) {
-                    setTable(FXCollections.observableArrayList());
-                    TopN(FXCollections.observableArrayList(searchPosts(null, AuthText.getText(),User)));
+                    TopNPosts(FXCollections.observableArrayList(searchPosts(null, AuthText.getText(), User)));
                     if (!PostIDText.getText().isEmpty()) {
-                        IDDisplay(searchPosts(parseAndValidateInteger(PostIDText.getText()), AuthText.getText(),User));
+                        IDDisplay(searchPosts(parseAndValidateInteger(PostIDText.getText()), AuthText.getText(), User));
                     }
                 } else {
-                    ErrorLabel.setText("Author Does Not Exist");
-                    ErrorLabel.setVisible(true);
+                    HomeLabel.setText("Author Does Not Exist");
+                    HomeLabel.setVisible(true);
                 }
             } else if (!PostIDText.getText().isEmpty()) {
-                IDDisplay(searchPosts(parseAndValidateInteger(PostIDText.getText()), null,User));
+                IDDisplay(searchPosts(parseAndValidateInteger(PostIDText.getText()), null, User));
             }
         }
     }
+
+
+    public ObservableList<Post> csvRead() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        File selectedFile = fileChooser.showOpenDialog(new Stage());
+        List<Post> postList = new ArrayList<>();
+        if (selectedFile == null) {
+            return FXCollections.observableArrayList();
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
+            br.readLine();
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+
+                int ID = Integer.parseInt(values[0].trim());
+                if (!Post.postExists(ID)) {
+                    String content = values[1].trim();
+                    String author = values[2].trim();
+                    int likes = Integer.parseInt(values[3].trim());
+                    int shares = Integer.parseInt(values[4].trim());
+                    String dateStr = values[5].trim();
+                    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("d/MM/yyyy HH:mm");
+                    LocalDateTime date = LocalDateTime.parse(dateStr, inputFormatter);
+
+                    Post post = new Post(ID, content, author, likes, shares, date, instance.getUserName());
+                    postList.add(post);
+                }
+            }
+            if (postList.isEmpty()) {
+                VipLabel.setText("All Post IDs already exist");
+            } else {
+                VipLabel.setText("Posts Added");
+            }
+            return FXCollections.observableArrayList(postList);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            VipLabel.setText("There was a issue reading CSV");
+        }
+        return FXCollections.observableArrayList();
+    }
+
+
 }
