@@ -28,7 +28,7 @@ public class CreateAccountController implements Initializable {
 
     public void CreateAccount(ActionEvent actionEvent) throws IOException {
         if (!accountsHashMap.containsKey(UserText.getText())) {
-            Accounts PK = new Accounts(PassText.getText(), FirstText.getText(), LastText.getText());
+            Accounts PK = new Accounts(PassText.getText(), FirstText.getText(), LastText.getText(),null);
             accountsHashMap.put(UserText.getText(), PK);
             Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"));
             Main.Primary.setScene(new Scene(root));

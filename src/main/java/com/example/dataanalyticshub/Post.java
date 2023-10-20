@@ -1,30 +1,30 @@
 package com.example.dataanalyticshub;
 
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.List;
 
 public class Post{
     private int ID,likes,shares;
-    private String content,author;
+    private String content,author, Username;
     private LocalDateTime date;
+    private static ObservableList<Post> PostList = FXCollections.observableArrayList();
 
 
-    public Post (String content, String author, int likes, int shares, LocalDateTime date) {
-        this.content = content;
-        this.author = author;
-        this.likes = likes;
-        this.shares = shares;
-        this.date = date;
-      }
-    public Post (int ID, String content, String author, int likes, int shares, LocalDateTime date) {
+    public Post (int ID, String content, String author, int likes, int shares, LocalDateTime date, String Username) {
         this.ID = ID;
         this.content = content;
         this.author = author;
         this.likes = likes;
         this.shares = shares;
         this.date = date;
+        this.Username = Username;
     }
 
 
@@ -52,6 +52,17 @@ public class Post{
         return shares;
     }
 
+    static ObservableList<Post> getPostList() {
+        return PostList;
+    }
+
+    public String getUsername() {
+        return Username;
+    }
+
+    public void setUsername(String username) {
+        Username = username;
+    }
 
     static class likesComparator implements Comparator<Post> {
         public int compare(Post s1, Post s2)
@@ -71,7 +82,7 @@ public class Post{
         String formattedDateTime = date.format(inputFormatter);
 
 
-        return  content + ", " + author + ", " + likes + ", " + shares + ", " + formattedDateTime;
+        return  ID + ", " + content + ", " + author + ", " + likes + ", " + shares + ", " + formattedDateTime;
     }
   
     public String toString () {

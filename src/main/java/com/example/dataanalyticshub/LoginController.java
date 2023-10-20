@@ -28,7 +28,7 @@ public class LoginController implements Initializable {
 
     public void CreateBtn(ActionEvent actionEvent) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource("CreateAccount.fxml"));
-        Main.Primary.setScene(new Scene(root));
+        data.getStage().setScene(new Scene(root));
         Main.Primary.show();
     }
 
@@ -37,7 +37,7 @@ public class LoginController implements Initializable {
             if (PassText.getText().equals(accountsHashMap.get(UserText.getText()).getPassword())) {
                 data.setUserName(UserText.getText());
                 Parent root = FXMLLoader.load(getClass().getResource("Dashboard.fxml"));
-                Main.Primary.setScene(new Scene(root));
+                data.getStage().setScene(new Scene(root));
             }
 
         }
